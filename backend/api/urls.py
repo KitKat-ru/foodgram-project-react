@@ -30,8 +30,6 @@ urlpatterns = [
     # path('users/subscriptions/'),
     # path('users/<int:user_id>/subscribe/'),
     path('auth/', include('djoser.urls.authtoken')),
-    # path('recipes/', include('recipes..urls', namespace='recipes')),
-    # path('ingredients/', include('ingredients.urls')),
     path('', include('djoser.urls')),
     # path('', include(router.urls)),
 ]

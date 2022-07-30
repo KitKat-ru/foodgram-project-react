@@ -143,6 +143,9 @@ dmypy.json
 # sudo docker-compose exec backend python manage.py makemigrations
 # sudo docker-compose exec backend python manage.py migrate
 
+# Заполнить ДБ ингредиентами
+# sudo docker-compose exec backend python manage.py populate_db
+
 # Создать супер пользователя
 # sudo docker-compose exec backend python manage.py createsuperuser
 
