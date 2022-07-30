@@ -20,7 +20,7 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Модель описывающая тег."""
     COLOR_PALETTE = [
-        ("#49b64e", "green", ),
+        ("#49b64e", "green", ), 
         ("#e26c2d", "orange", ),
         ("#8775d2", "purple", ),
     ]
