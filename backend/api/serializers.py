@@ -1,7 +1,10 @@
 from djoser.serializers import UserSerializer, UserCreateSerializer
-from users.models import User
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework import serializers
+
+from users.models import User
+from ingredients.models import Ingredient, Tag
+from recipes.models import Recipe, RecipeIngredient, RecipeTag
 
 
 class CustomUserSerializer(UserSerializer):

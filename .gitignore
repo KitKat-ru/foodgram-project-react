@@ -131,9 +131,13 @@ dmypy.json
 # .idea
 .idea
 .vscode/
-
+# http://localhost/api/ingredients/
 # Собрать докеркомпоз
 # sudo docker-compose up -d --build
+
+# Пересоздать
+# sudo docker-compose up -d --force-recreate nginx
+
 
 # Миграции в контейнере
 # sudo docker-compose exec backend python manage.py makemigrations
@@ -150,7 +154,7 @@ dmypy.json
 # sudo docker logs --follow infra_nginx_1
 # sudo docker logs --follow infra_db_1
 
-
+# http://localhost/api/docs/
 
 # Анигиляция
 # sudo docker system prune -a --volumes
