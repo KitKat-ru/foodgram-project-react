@@ -20,8 +20,9 @@ class Ingredient(models.Model):
 class Tag(models.Model):
     """Модель описывающая тег."""
     COLOR_PALETTE = [
-        ("#FFFFFF", "white", ),
-        ("#000000", "black", ),
+        ("#49b64e", "green", ),
+        ("#e26c2d", "orange", ),
+        ("#8775d2", "purple", ),
     ]
     name = models.CharField(max_length=128, verbose_name='наименование тега')
     color = ColorField(samples=COLOR_PALETTE, verbose_name='цвет тега')

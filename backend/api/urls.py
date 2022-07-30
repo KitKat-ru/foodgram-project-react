@@ -20,18 +20,18 @@ router = routers.DefaultRouter()
 #     r'users/(?P<user_id>\d+)/subscribe',
 #     views.CustomUserViewSet,
 #     basename='subscribe') # Доделать сериализер
-router.register(
-    r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
-    views.CommentViewSet,
-    basename='comments'
-)
+# router.register(
+#     r'titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments',
+#     views.CommentViewSet,
+#     basename='comments'
+# )
 
 urlpatterns = [
-    path('users/subscriptions/'),
-    path('users/<int:user_id>/subscribe/'),
+    # path('users/subscriptions/'),
+    # path('users/<int:user_id>/subscribe/'),
     path('auth/', include('djoser.urls.authtoken')),
     # path('recipes/', include('recipes..urls', namespace='recipes')),
     # path('ingredients/', include('ingredients.urls')),
     path('', include('djoser.urls')),
-    path('', include(router.urls)),
+    # path('', include(router.urls)),
 ]
