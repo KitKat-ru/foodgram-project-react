@@ -42,3 +42,19 @@ class CustomCreateUserSerializer(UserCreateSerializer):
                 'Поля email и username не должны совпадать.'
             )
         return attrs
+
+
+class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения и изменения данных о тегах."""
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения и изменения данных об ингридиентах."""
+
+    class Meta:
+        model = Ingredient
+        fields = ('id', 'name', 'measurement_unit')

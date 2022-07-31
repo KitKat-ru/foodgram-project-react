@@ -8,8 +8,8 @@ app_name = 'api'
 
 router = routers.DefaultRouter()
 
-# router.register(r'ingredients', views.***, basename='ingredients') # CategoryViewSet
-# router.register(r'recipes', views.***, basename='category') # CategoryViewSet
+router.register(r'ingredients', views.IngredientViewSet, basename='ingredients')
+router.register(r'tags', views.TagViewSet, basename='tags')
 
 # router.register(
 #     r'recipes/(?P<recipes_id>\d+)/favorite',
@@ -30,6 +30,7 @@ urlpatterns = [
     # path('users/subscriptions/'),
     # path('users/<int:user_id>/subscribe/'),
     path('auth/', include('djoser.urls.authtoken')),
+
     path('', include('djoser.urls')),
-    # path('', include(router.urls)),
+    path('', include(router.urls)),
 ]
