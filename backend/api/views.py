@@ -23,6 +23,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = serializers.IngredientSerializer
     queryset = Ingredient.objects.all()
+    pagination_class = None
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -31,3 +32,12 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
+    pagination_class = None
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    """Вьюсет Рецептов.
+    Реализованы методы чтения списка объектов и отдельного объекта.
+    """
+    serializer_class = serializers.RecipeSerializer
+    queryset = Recipe.objects.all()

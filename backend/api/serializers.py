@@ -58,3 +58,14 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения и изменения данных об ингридиентах."""
+    author = CustomUserSerializer()
+    ingredients = IngredientSerializer(many=True)
+    tags = TagSerializer(many=True)
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'description', 'cooking_time',) # 'is_favorited', 'is_in_shopping_cart'
