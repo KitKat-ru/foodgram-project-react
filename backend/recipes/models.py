@@ -12,7 +12,7 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         db_column='author',
         related_name='recipes',
-        verbose_name='автор рецепта'
+        verbose_name='автор рецепта',
     )
     description = models.TextField(
         blank=False,
@@ -22,11 +22,12 @@ class Recipe(models.Model):
         verbose_name='фото блюда',
         upload_to='recipes/image/',
         blank=False,
-        help_text='Загрузите изображение',
+        help_text='загрузите изображение',
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='RecipeIngredient', # возможно надо будет добавить through_field = (recipe, ingredient)
+        through='RecipeIngredient', 
+        through_fields=('recipe', 'ingredient'),
         db_column='ingredient',
         verbose_name='ингредиенты для блюда'
     )
@@ -65,8 +66,8 @@ class RecipeTag(models.Model):
 
 class RecipeIngredient(models.Model):
     """Промежуточная таблица для связи Ingredient-Recipe."""
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE) # релатед найм добавить
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE) # релатед найм добавить
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='amounts', verbose_name='Ингредиент') # релатед найм добавить
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='amounts') # релатед найм добавить
     amount = models.PositiveSmallIntegerField(
         blank=True,
         null=False,
@@ -75,7 +76,5 @@ class RecipeIngredient(models.Model):
         verbose_name='количество'
     )
 
-# Выполнить pip install django-colorfield
-# Добавить colorfieldвsettings.INSTALLED_APPS
-# Выполнить python manage.py collectstatic
-    
+    def __str__(self):
+        return f'{self.recipe}: {self.ingredient} - {self.amount}'

@@ -19,8 +19,6 @@ class RecipeAdmin(admin.ModelAdmin):
         'author',
         'description',
         'image',
-        # 'ingredients',
-        # 'tags',
         'cooking_time',
         'pub_date',
     ]

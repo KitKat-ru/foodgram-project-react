@@ -151,7 +151,7 @@ dmypy.json
 
 # Подтянуть статику
 # sudo docker exec infra_backend_1 python ./manage.py collectstatic --noinput
-
+ 
 # Логи
 # sudo docker logs --follow infra_backend_1
 # sudo docker logs --follow infra_nginx_1
