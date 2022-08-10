@@ -1,10 +1,27 @@
 from djoser.serializers import UserSerializer, UserCreateSerializer
-from rest_framework.validators import UniqueTogetherValidator
 from rest_framework import serializers
+
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework.validators import UniqueTogetherValidator
+
 from users.models import User
 from ingredients.models import Ingredient, Tag
 from recipes.models import Recipe, RecipeIngredient, RecipeTag
+
+
+import logging
+from logging.handlers import RotatingFileHandler
+
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename='main.log',
+    filemode='w'
+)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
+logger.addHandler(handler)
 
 
 class CustomUserSerializer(UserSerializer):
@@ -55,7 +72,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализатор для чтения и изменения данных об ингридиентах."""
+    """Сериализатор для чтения данных об ингридиентах."""
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit', )
@@ -67,9 +84,12 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         source='ingredient',
         slug_field='id',
         # read_only=True
-        # Выгружаем все ингредиенты и берем ID связанных с recipe
-        queryset=Ingredient.objects.all()
+        # Выгружаем все ингредиенты через поле ingridient в 
+        # промежуточной таблице RecipeIngredient и берем все объекты 
+        # ингридиентов связанные в промежуточной модели
+        queryset=Ingredient.objects.all()  
     )
+    logger.info(f'{id.source}')
     name = serializers.SlugRelatedField(
         # Ссылаемся на модель Ingredient и берем название
         source='ingredient',
@@ -82,6 +102,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         slug_field='measurement_unit',
         read_only=True
     )
+
     class Meta:
         model = RecipeIngredient
         # Указываем подтянутые из Ingredient поля и добавляем поле amount
@@ -90,21 +111,68 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения и изменения данных об ингридиентах."""
-    # Вложенные сериализатор
-    author = CustomUserSerializer()
-    # Через MethodField вызываем метод get_ingredients в котором ищем все
-    # ингредиенты связанные с recipe и передаем в промежуточный сериализатор
-    # как qset 
-    ingredients = serializers.SerializerMethodField(read_only=True)
     # Вложенный сериализатор
-    tags = TagSerializer(many=True)
+    author = CustomUserSerializer(read_only=True)
+    # Через MethodField вызываем метод get_ingredients в котором ищем все
+    # ingredient связанные с recipe в промежуточной таблице и передаем в
+    # сериализатор как qset
+    ingredients = serializers.SerializerMethodField()
+    # Вложенный сериализатор
+    tags = TagSerializer(many=True, read_only=True)
     # Кастомное поле для предобразования байтовой строки в картинку
     image=Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'description', 'cooking_time',) # 'is_favorited', 'is_in_shopping_cart'
+        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time',) # 'is_favorited', 'is_in_shopping_cart'
 
     def get_ingredients(self, obj):
         queryset = RecipeIngredient.objects.filter(recipe=obj)
         return RecipeIngredientSerializer(queryset, many=True).data
+
+
+class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для добавления в recipe данных об ингридиентах."""
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    # amount = 
+
+    class Meta:
+        model = RecipeIngredient
+        fields = ('id', 'amount' )
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания recipe."""
+    author = CustomUserSerializer(read_only=True)
+    ingredients = CreateIngredientRecipeSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time',)
+
+    def create(self, validated_data):
+        author = self.context.get('request').user
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = Recipe.objects.create(author=author, **validated_data)
+        # Для каждого достижения из списка достижений
+        for tag in tags:
+            logger.info(f'{tag}')
+            logger.info(f'{tags}')
+            # Поместим ссылку на каждое достижение во вспомогательную таблицу
+            # Не забыв указать к какому котику оно относится
+            recipe.tags.add(tag)
+        for ingredient in ingredients:
+            # Создадим новую запись или получим существующий экземпляр из БД
+            # current_ingredient, status = Ingredient.objects.get(
+            #     **ingredient)
+            # logger.info(f'{current_ingredient}')
+            logger.info(f'{ingredients}')
+            # Поместим ссылку на каждое достижение во вспомогательную таблицу
+            # Не забыв указать к какому котику оно относится
+            RecipeIngredient.objects.create(
+                ingredient=ingredient['id'], recipe=recipe, amount=ingredient['amount'])
+
+        return recipe 

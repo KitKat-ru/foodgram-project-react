@@ -37,7 +37,14 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет Рецептов.
-    Реализованы методы чтения списка объектов и отдельного объекта.
+    Реализованы методы чтения списка объектов и создания нового рецепта.
+    Чтение, изменение и удаление отдельного объекта.
     """
     serializer_class = serializers.RecipeSerializer
     queryset = Recipe.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return serializers.RecipeCreateSerializer
+        return serializers.RecipeSerializer
+        

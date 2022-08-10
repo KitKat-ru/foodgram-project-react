@@ -14,7 +14,7 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='автор рецепта',
     )
-    description = models.TextField(
+    text = models.TextField(
         blank=False,
         verbose_name='описание рецепта'
     )
