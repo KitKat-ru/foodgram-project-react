@@ -44,7 +44,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'create':
-            return serializers.RecipeCreateSerializer
-        return serializers.RecipeSerializer
-        
+        # if self.action == 'create' or self.action == 'update':
+        if self.action == 'list' or self.action == 'retrieve':
+            return serializers.RecipeSerializer
+        return serializers.RecipeCreateSerializer
+    
+
+    

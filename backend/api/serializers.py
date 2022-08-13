@@ -13,11 +13,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename='main.log',
-    filemode='w'
-)
+# logging.basicConfig(
+#     level=logging.DEBUG,
+#     filename='main.log',
+#     filemode='w'
+# )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
@@ -89,7 +89,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         # ингридиентов связанные в промежуточной модели
         queryset=Ingredient.objects.all()  
     )
-    logger.info(f'{id.source}')
+    # logger.info(f'{id.source}')
     name = serializers.SlugRelatedField(
         # Ссылаемся на модель Ingredient и берем название
         source='ingredient',
@@ -134,7 +134,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для добавления в recipe данных об ингридиентах."""
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    # amount = 
 
     class Meta:
         model = RecipeIngredient
@@ -142,7 +141,8 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания recipe."""
+    """Сериализатор для создания и изменения recipe."""
+    logger.info(f'Я внутри сериализатора')
     author = CustomUserSerializer(read_only=True)
     ingredients = CreateIngredientRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
@@ -153,26 +153,38 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time',)
 
     def create(self, validated_data):
+        logger.info(f'{self}')
+        logger.info(f'rer')
+        logger.info(f'{validated_data}')
         author = self.context.get('request').user
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = Recipe.objects.create(author=author, **validated_data)
-        # Для каждого достижения из списка достижений
         for tag in tags:
-            logger.info(f'{tag}')
-            logger.info(f'{tags}')
-            # Поместим ссылку на каждое достижение во вспомогательную таблицу
-            # Не забыв указать к какому котику оно относится
             recipe.tags.add(tag)
         for ingredient in ingredients:
-            # Создадим новую запись или получим существующий экземпляр из БД
-            # current_ingredient, status = Ingredient.objects.get(
-            #     **ingredient)
-            # logger.info(f'{current_ingredient}')
-            logger.info(f'{ingredients}')
-            # Поместим ссылку на каждое достижение во вспомогательную таблицу
-            # Не забыв указать к какому котику оно относится
             RecipeIngredient.objects.create(
                 ingredient=ingredient['id'], recipe=recipe, amount=ingredient['amount'])
+        return recipe
+    
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeSerializer(instance, context=context).data
 
-        return recipe 
+    def update(self, instance, validated_data):
+        logger.info(f'{self.data}')
+        logger.info(f'Я тут')
+        logger.info(f'{validated_data}')
+        logger.info(f'Я тут')
+        # logger.info(f'{instance.context}')
+        instance.tags.clear()
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        for tag in tags:
+            instance.tags.add(tag)
+        for ingredient in ingredients:
+            RecipeIngredient.objects.create(
+                ingredient=ingredient['id'], recipe=instance, amount=ingredient['amount'])
+        return super().update(instance, validated_data)
