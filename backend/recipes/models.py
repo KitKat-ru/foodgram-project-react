@@ -59,15 +59,22 @@ class Recipe(models.Model):
 
 
 class RecipeTag(models.Model):
-    """Промежуточная таблица для связи Tag-Recipe."""
+    """Промежуточная модель для связи Tag-Recipe."""
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE) # релатед найм добавить
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE) # релатед найм добавить
 
 
 class RecipeIngredient(models.Model):
-    """Промежуточная таблица для связи Ingredient-Recipe."""
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE, related_name='amounts', verbose_name='Ингредиент') # релатед найм добавить
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='amounts') # релатед найм добавить
+    """Промежуточная модель для связи Ingredient-Recipe."""
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='amounts',
+        verbose_name='Ингредиент'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='amounts'
+    )
     amount = models.PositiveSmallIntegerField(
         blank=True,
         null=False,

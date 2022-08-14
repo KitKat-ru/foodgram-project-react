@@ -6,18 +6,13 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from users.models import User
 from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe, RecipeIngredient, RecipeTag
-
+from recipes.models import Recipe, RecipeIngredient
+# from models import Favorite, ShoppingBasket
 
 import logging
 from logging.handlers import RotatingFileHandler
 
 
-# logging.basicConfig(
-#     level=logging.DEBUG,
-#     filename='main.log',
-#     filemode='w'
-# )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
@@ -64,11 +59,23 @@ class CustomCreateUserSerializer(UserCreateSerializer):
         return attrs
 
 
+class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения и изменения данных о тегах."""
+    image=Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time',)
+
+
+
+
 class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения и изменения данных о тегах."""
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug',)
+
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -167,10 +174,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 ingredient=ingredient['id'], recipe=recipe, amount=ingredient['amount'])
         return recipe
     
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return RecipeSerializer(instance, context=context).data
+    # def to_representation(self, instance):
+    #     request = self.context.get('request')
+    #     context = {'request': request}
+    #     return RecipeSerializer(instance, context=context).data
 
     def update(self, instance, validated_data):
         logger.info(f'{self.data}')
