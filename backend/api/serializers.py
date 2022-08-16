@@ -1,3 +1,4 @@
+from urllib import request
 from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers
 
@@ -7,7 +8,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from users.models import User
 from ingredients.models import Ingredient, Tag
 from recipes.models import Recipe, RecipeIngredient
-# from models import Favorite, ShoppingBasket
+from .models import Favorite # ShoppingBasket
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -60,13 +61,44 @@ class CustomCreateUserSerializer(UserCreateSerializer):
 
 
 class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для чтения и изменения данных о тегах."""
-    image=Base64ImageField()
+    """Сериализатор для чтения и рецептов в избранном и корзине"""
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time',)
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')    
 
+class FavoriteSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    recipe = serializers.PrimaryKeyRelatedField(
+        queryset=Recipe.objects.all(),
+    )
+    class Meta:
+        model = Favorite
+        fields = ('user', 'recipe')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже в избранном!',
+            )
+        ]
+    # def validate(self, value):
+    #     request = self.context['request'].user
+    #     recipe = value['recipe']
+    #     if not request or request.user.is_anonymous:
+    #         return False
+    #     if Favorite.objects.filter(user=request.user, recipe=recipe).exists():
+    #         raise serializers.ValidationError('Рецепт уже добавлен!')
+    #     return value
+
+    # def to_representation(self, instance):
+    #     request = self.context.get('request')
+    #     context = {'request': request}
+    #     return AbbreviatedRecipeSerializer(instance.recipe,context=context).data
 
 
 
@@ -128,14 +160,21 @@ class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     # Кастомное поле для предобразования байтовой строки в картинку
     image=Base64ImageField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time',) # 'is_favorited', 'is_in_shopping_cart'
+        fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time', 'is_favorited', ) # 'is_favorited', 'is_in_shopping_cart'
 
     def get_ingredients(self, obj):
         queryset = RecipeIngredient.objects.filter(recipe=obj)
         return RecipeIngredientSerializer(queryset, many=True).data
+
+    def get_is_favorited(self, obj):
+        request = self.context['request']
+        if not request or request.user.is_anonymous:
+            return False
+        return Favorite.objects.filter(user=request.user, recipe=obj.id).exists()
 
 
 class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -149,7 +188,7 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и изменения recipe."""
-    logger.info(f'Я внутри сериализатора')
+    # logger.info(f'Я внутри сериализатора')
     author = CustomUserSerializer(read_only=True)
     ingredients = CreateIngredientRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
@@ -160,9 +199,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         fields = ('id', 'tags', 'author', 'ingredients', 'name', 'image', 'text', 'cooking_time',)
 
     def create(self, validated_data):
-        logger.info(f'{self}')
-        logger.info(f'rer')
-        logger.info(f'{validated_data}')
         author = self.context.get('request').user
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -174,17 +210,12 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 ingredient=ingredient['id'], recipe=recipe, amount=ingredient['amount'])
         return recipe
     
-    # def to_representation(self, instance):
-    #     request = self.context.get('request')
-    #     context = {'request': request}
-    #     return RecipeSerializer(instance, context=context).data
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeSerializer(instance, context=context).data
 
     def update(self, instance, validated_data):
-        logger.info(f'{self.data}')
-        logger.info(f'Я тут')
-        logger.info(f'{validated_data}')
-        logger.info(f'Я тут')
-        # logger.info(f'{instance.context}')
         instance.tags.clear()
         RecipeIngredient.objects.filter(recipe=instance).delete()
         ingredients = validated_data.pop('ingredients')
