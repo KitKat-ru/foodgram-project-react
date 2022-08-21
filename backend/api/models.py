@@ -22,10 +22,10 @@ class Favorite(models.Model):
 class ShoppingBasket(models.Model):
     """Модель для реализации добавления рецептов в "Корзину"."""
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='subscriptions'
+        User, on_delete=models.CASCADE, related_name='shopping_basket'
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='subscriptions'
+        Recipe, on_delete=models.CASCADE, related_name='shopping_basket'
     )
 
     class Meta:

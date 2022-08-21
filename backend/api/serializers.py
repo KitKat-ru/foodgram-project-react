@@ -59,12 +59,12 @@ class CustomCreateUserSerializer(UserCreateSerializer):
 
 class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения и рецептов в избранном и корзине"""
-    image = Base64ImageField()
+    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time',)
-        read_only_fields = ('id', 'name', 'image', 'cooking_time')    
+        fields = ('id', 'name', 'image', 'cooking_time', )
+        read_only_fields = ('id', 'name', 'image', 'cooking_time', )    
 
 class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
@@ -84,21 +84,21 @@ class FavoriteSerializer(serializers.ModelSerializer):
             )
         ]
 
-    # def validate(self, attrs):
-    #     request = self.context.get('request')
-    #     if not request or request.user.is_anonymous:
-    #         return False
-    #     recipe = attrs['recipe']
-    #     if Favorite.objects.filter(
-    #         user=request.user.id, recipe=recipe
-    #     ).exists():
-    #         raise serializers.ValidationError({'status': 'Рецепт уже добавлен'})
-    #     return attrs
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if not request or request.user.is_anonymous:
+            return False
+        recipe = attrs['recipe']
+        if Favorite.objects.filter(
+            user=request.user.id, recipe=recipe
+        ).exists():
+            raise serializers.ValidationError({'status': 'Рецепт уже добавлен'})
+        return attrs
 
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return AbbreviatedRecipeSerializer(instance.recipe,context=context).data
+        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
 
 
 class ShoppingBasketSerializer(serializers.ModelSerializer):
@@ -121,8 +121,7 @@ class ShoppingBasketSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return AbbreviatedRecipeSerializer(instance.recipe,context=context).data
-
+        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -205,8 +204,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
         if user.is_authenticated:
-        # if not request or request.user.is_anonymous:
-        #     return False
             return Favorite.objects.filter(
                 user=user, recipe=obj
             ).exists()
