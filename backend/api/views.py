@@ -32,7 +32,6 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (rest_permissions.AllowAny, )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = filters.SearchIngredientFilter
-    # filter_class = f
     search_fields = ('^name', )
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -56,6 +55,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = filters.RecipeFilter
+    # search_fields = ('^tags', )
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':

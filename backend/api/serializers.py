@@ -128,8 +128,8 @@ class TagSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения и изменения данных о тегах."""
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'color', 'slug',)
-
+        fields = ('id', 'name', 'color', 'slug', )
+        read_only_fields = ('id', 'name', 'color', 'slug', )
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -166,7 +166,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         # Указываем подтянутые из Ingredient поля и добавляем поле amount
-        fields = ('id', 'name', 'measurement_unit', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount', )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -192,7 +192,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'id', 'tags', 'author', 'ingredients', 'name', 'image', 
+            'id', 'author', 'ingredients', 'tags', 'name', 'image', 
             'text', 'cooking_time', 'is_favorited', 'is_in_shopping_cart'
         )
         
@@ -223,7 +223,7 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'amount' )
+        fields = ('id', 'amount', )
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):

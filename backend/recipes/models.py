@@ -60,8 +60,8 @@ class Recipe(models.Model):
 
 class RecipeTag(models.Model):
     """Промежуточная модель для связи Tag-Recipe."""
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE) # релатед найм добавить
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE) # релатед найм добавить
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='recipe_tags') # релатед найм добавить
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_tags') # релатед найм добавить
 
 
 class RecipeIngredient(models.Model):

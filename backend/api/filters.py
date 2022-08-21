@@ -1,12 +1,17 @@
 from django_filters import rest_framework as filters
-from ingredients.models import Ingredient
+from ingredients.models import Ingredient, Tag
 from recipes.models import Recipe
 from django_filters.rest_framework import FilterSet, filters
 
 class RecipeFilter(FilterSet):
     """Кастомный фильтр для рецептов.
     Для вкладок "Избранное, "Корзина" и тегов."""
-    tags = filters.MultipleChoiceFilter(field_name='tags__slug', )
+    tags = filters.ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        label='tags',
+        queryset=Tag.objects.all(),
+    )
     is_favorited = filters.BooleanFilter(
         label='Favorited',
         method='get_is_favorited',
