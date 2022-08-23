@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from users.models import User
 
-from . import permissions, serializers, filters, models
+from . import permissions, serializers, filters, models, pagination
 
 
 class CustomUserViewSet(UserViewSet):
@@ -20,6 +20,35 @@ class CustomUserViewSet(UserViewSet):
     """
     serializer_class = serializers.CustomUserSerializer
     queryset = User.objects.all()
+
+    @action(
+        detail=False,
+        methods=['POST', 'DELETE',],
+        permission_classes=(IsAuthenticated,),
+        # url_name='subscribe',
+        # url_path='subscribe',
+    )
+    def subscriptions(self, request):
+        user=request.user
+        author = 
+        data = {'user': user.id, 'author': }
+        if request.method == 'POST':
+            serializer = serializers.SubscriptionSerializer(
+                data=data, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                data=serializer.data, status=status.HTTP_201_CREATED
+            )
+        elif request.method == 'DELETE':
+            author = get_object_or_404(User, pk=pk)
+            subscribe = models.Subscription.objects.filter(
+                user=user.id, author=author
+            )
+            subscribe.delete()
+            return Response('Вы отписались', status=status.HTTP_204_NO_CONTENT)
+        return Response('Ошибка', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -43,6 +72,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
     permission_classes = (rest_permissions.AllowAny, )
 
+
 class RecipeViewSet(viewsets.ModelViewSet):
     """Вьюсет Рецептов.
     Реализованы методы чтения списка объектов и создания нового рецепта.
@@ -55,7 +85,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend, )
     filterset_class = filters.RecipeFilter
-    # search_fields = ('^tags', )
+    pagination_class = pagination.CustomPagination
+    
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -98,10 +129,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='shopping_cart',
     )
     def shopping_cart(self, request, pk):
-        # recipe = get_object_or_404(Recipe, id=pk)
-        # serializer = serializers.ShoppingBasketSerializer(
-        #     data={'user': request.user.id, 'recipe': recipe.id}
-        # )
         user=request.user
         data = {'user': user.id, 'recipe': pk}
         if request.method == 'POST':
@@ -110,10 +137,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-        # if request.method == 'POST':
-        #     serializer.is_valid(raise_exception=True)
-        #     serializer.save(recipe=recipe, user=request.user)
-        #     serializer = serializers.AbbreviatedRecipeSerializer(recipe)
             return Response(
                 data=serializer.data, status=status.HTTP_201_CREATED
             )
@@ -122,9 +145,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             basket = models.ShoppingBasket.objects.filter(
                 user=user.id, recipe=recipe
             )
-            # basket = get_object_or_404(
-            #     models.ShoppingBasket, user=request.user, recipe=recipe
-            # )
             basket.delete()
             return Response('Рецепт удален', status=status.HTTP_204_NO_CONTENT)
         return Response('Ошибка', status=status.HTTP_500_INTERNAL_SERVER_ERROR)

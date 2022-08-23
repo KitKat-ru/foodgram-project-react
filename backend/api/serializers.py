@@ -9,7 +9,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from users.models import User
 
-from .models import Favorite, ShoppingBasket
+from .models import Favorite, ShoppingBasket, Subscription
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -18,13 +18,26 @@ logger.addHandler(handler)
 
 
 class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.BooleanField(read_only=True)
+    # is_subscribed = serializers.BooleanField(read_only=True)
+    is_subscribed = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_is_subscribed',
+    )
+
     class Meta:
         model = User
         fields = (
             'id', 'email', 'username', 'first_name',
             'last_name', 'is_subscribed',
         )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Subscription.objects.filter(
+                user=user, following=obj
+            ).exists()
+        return False
 
 
 class CustomCreateUserSerializer(UserCreateSerializer):
@@ -94,6 +107,30 @@ class FavoriteSerializer(serializers.ModelSerializer):
         ).exists():
             raise serializers.ValidationError({'status': 'Рецепт уже добавлен'})
         return attrs
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    author = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    class Meta:
+        model = Subscription
+        fields = ('user', 'author')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=['user', 'author'],
+                message='Рецепт уже в корзине!',
+            )
+        ]
 
     def to_representation(self, instance):
         request = self.context.get('request')
