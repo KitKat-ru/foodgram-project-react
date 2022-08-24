@@ -17,12 +17,17 @@ handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
 logger.addHandler(handler)
 
 
+class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения и рецептов в избранном и корзине"""
+    # image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time', )
+        read_only_fields = ('id', 'name', 'image', 'cooking_time', )   
+
+
 class CustomUserSerializer(UserSerializer):
-    # is_subscribed = serializers.BooleanField(read_only=True)
-    is_subscribed = serializers.SerializerMethodField(
-        read_only=True,
-        method_name='get_is_subscribed',
-    )
 
     class Meta:
         model = User
@@ -30,14 +35,6 @@ class CustomUserSerializer(UserSerializer):
             'id', 'email', 'username', 'first_name',
             'last_name', 'is_subscribed',
         )
-
-    def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if user.is_authenticated:
-            return Subscription.objects.filter(
-                user=user, following=obj
-            ).exists()
-        return False
 
 
 class CustomCreateUserSerializer(UserCreateSerializer):
@@ -68,16 +65,7 @@ class CustomCreateUserSerializer(UserCreateSerializer):
                 'Поля email и username не должны совпадать.'
             )
         return attrs
-
-
-class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
-    """Сериализатор для чтения и рецептов в избранном и корзине"""
-    # image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time', )
-        read_only_fields = ('id', 'name', 'image', 'cooking_time', )    
+ 
 
 class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(
@@ -114,28 +102,47 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
+class SubscriptionListSerializer(serializers.ModelSerializer):
+    """Сериализатор для представления списка подписок."""
+    id = serializers.ReadOnlyField(source='following.id')
+    email = serializers.ReadOnlyField(source='following.email')
+    username = serializers.ReadOnlyField(source='following.username')
+    first_name = serializers.ReadOnlyField(source='following.first_name')
+    last_name = serializers.ReadOnlyField(source='following.last_name')
+    is_subscribed = serializers.SerializerMethodField(
+        method_name='get_is_subscribed',
     )
-    author = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
+    recipes = serializers.SerializerMethodField(
+        method_name='get_recipes',
+    )
+    recipes_count = serializers.SerializerMethodField(
+        method_name='get_recipes_count',
     )
     class Meta:
         model = Subscription
-        fields = ('user', 'author')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Subscription.objects.all(),
-                fields=['user', 'author'],
-                message='Рецепт уже в корзине!',
-            )
-        ]
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count', 
+        )
 
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
+        def get_is_subscribed(self, obj):
+            return Subscription.objects.filter(
+                user=obj.user, following=obj.following
+            ).exists()
+        
+        def recipes(self, obj):
+            request = self.context.get('request')
+            limit = request.GET.get('recipes_limit')
+            qs = Recipe.objects.filter(author=obj.following)
+            if limit:
+                paginate_qs = qs[:int(limit)]
+            return AbbreviatedRecipeSerializer(qs, many=True).data
+
+        def recipes_count(self, obj):
+            return Recipe.objects.filter(author=obj.following).count
+
+
+
 
 
 class ShoppingBasketSerializer(serializers.ModelSerializer):

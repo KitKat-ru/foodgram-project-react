@@ -152,21 +152,35 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_FILTER_BACKENDS': (
-        # 'rest_framework.filters.SearchFilter',
-        # 'django_filters.rest_framework.DjangoFilterBackend',
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    # 'PAGE_SIZE': 6
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 6
 }
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
+        'user_create': 'api.serializers.CustomCreateUserSerializer',
         'user': 'api.serializers.CustomUserSerializer',
         'current_user': 'api.serializers.CustomUserSerializer',
-        'user_create': 'api.serializers.CustomCreateUserSerializer',
     },
+    'PERMISSIONS': {
+        'activation': ['rest_framework.permissions.AllowAny'],
+        'password_reset': ['rest_framework.permissions.AllowAny'],
+        'password_reset_confirm': ['rest_framework.permissions.AllowAny'],
+        'set_password': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'username_reset': ['rest_framework.permissions.AllowAny'],
+        'username_reset_confirm': ['rest_framework.permissions.AllowAny'],
+        'set_username': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'user_create': ['rest_framework.permissions.AllowAny'],
+        'user_delete': ['rest_framework.permissions.CurrentUserOrAdmin'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'token_create': ['rest_framework.permissions.AllowAny'],
+        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+    },
+    'HIDE_USERS': False,
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
