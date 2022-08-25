@@ -14,7 +14,6 @@ class AuthorOrReadOnly(ObjectReadOnly):
     Изменять и удалять объект может его автор, модератор или админ.
     """
     def has_object_permission(self, request, view, obj):
-        user = request.user
-        if user.is_authenticated:
-            return user == obj.author or user.is_admin or user.is_moderator
-        return super().has_object_permission(request, view, obj)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.author == request.user or request.user.is_staff

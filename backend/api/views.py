@@ -30,11 +30,12 @@ class CustomUserViewSet(DjUserViewSet):
         url_name='subscribe',
         permission_classes=(IsAuthenticated, )
     )
-    def subscribe(self, request, pk):
+    def subscribe(self, request, id):
         user = request.user
-        following = get_object_or_404(User, id=pk)
+        # following = user.follower.all()
+        following = get_object_or_404(User, id=id)
         chain_follow =models.Subscription.objects.filter(
-            user=user, following=following
+            user=user.id, following=following.id
         )
         if request.method == 'POST':
             if user == following:

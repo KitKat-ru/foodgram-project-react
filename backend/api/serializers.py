@@ -110,6 +110,7 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
     first_name = serializers.ReadOnlyField(source='following.first_name')
     last_name = serializers.ReadOnlyField(source='following.last_name')
     is_subscribed = serializers.SerializerMethodField(
+        # source='following.is_subscribed',
         method_name='get_is_subscribed',
     )
     recipes = serializers.SerializerMethodField(
@@ -125,24 +126,21 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
             'is_subscribed', 'recipes', 'recipes_count', 
         )
 
-        def get_is_subscribed(self, obj):
-            return Subscription.objects.filter(
-                user=obj.user, following=obj.following
-            ).exists()
-        
-        def recipes(self, obj):
-            request = self.context.get('request')
-            limit = request.GET.get('recipes_limit')
-            qs = Recipe.objects.filter(author=obj.following)
-            if limit:
-                paginate_qs = qs[:int(limit)]
-            return AbbreviatedRecipeSerializer(qs, many=True).data
+    def get_is_subscribed(self, obj):
+        return Subscription.objects.filter(
+            user=obj.user, following=obj.following
+        ).exists()
+    
+    def get_recipes(self, obj):
+        request = self.context.get('request')
+        limit = request.GET.get('recipes_limit')
+        paginate_qs = Recipe.objects.filter(author=obj.following)
+        if limit:
+            paginate_qs = paginate_qs[:int(limit)]
+        return AbbreviatedRecipeSerializer(paginate_qs, many=True).data
 
-        def recipes_count(self, obj):
-            return Recipe.objects.filter(author=obj.following).count
-
-
-
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.following).count()
 
 
 class ShoppingBasketSerializer(serializers.ModelSerializer):

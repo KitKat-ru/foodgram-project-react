@@ -165,6 +165,7 @@ DJOSER = {
         'user': 'api.serializers.CustomUserSerializer',
         'current_user': 'api.serializers.CustomUserSerializer',
     },
+    'HIDE_USERS': False,
     'PERMISSIONS': {
         'activation': ['rest_framework.permissions.AllowAny'],
         'password_reset': ['rest_framework.permissions.AllowAny'],
@@ -180,7 +181,6 @@ DJOSER = {
         'token_create': ['rest_framework.permissions.AllowAny'],
         'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
     },
-    'HIDE_USERS': False,
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
