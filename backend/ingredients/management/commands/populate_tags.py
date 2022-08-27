@@ -3,15 +3,15 @@ import os
 
 from django.apps import apps
 from django.core.management.base import BaseCommand, CommandError
-from ingredients.models import Ingredient
+from ingredients.models import Tag
 
 
 class Command(BaseCommand):
-    help = 'populates ingredients_ingredient table'
+    help = 'populates ingredients_tag table'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.model_name = Ingredient
+        self.model_name = Tag
 
     def add_arguments(self, parser):
         parser.add_argument('filename', type=str, help='filename for csv file')
@@ -36,7 +36,8 @@ class Command(BaseCommand):
         try:
             self.model_name.objects.create(
                 name=data['name'],
-                measurement_unit=data['measurement_unit']
+                color=data['color'],
+                slug=data['slug'],
             )
         except Exception as e:
             raise CommandError(
@@ -56,12 +57,13 @@ class Command(BaseCommand):
                     if row != '' and line_count >= 1:
                         data = {}
                         data['name'] = row[0]
-                        data['measurement_unit'] = row[1]
+                        data['color'] = row[1]
+                        data['slug'] = row[2]
                         self.insert_genre_to_db(data)
                     line_count += 1
             self.stdout.write(
                 self.style.SUCCESS(
-                    f'{line_count} entries added to Ingredients'
+                    f'{line_count} entries added to Tags'
                 )
             )
         except FileNotFoundError:

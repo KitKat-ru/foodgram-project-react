@@ -1,10 +1,9 @@
-from multiprocessing import context
 import rest_framework.permissions as rest_permissions
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjUserViewSet
 from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe
+from recipes.models import Recipe, RecipeIngredient
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -56,7 +55,7 @@ class CustomUserViewSet(DjUserViewSet):
             serializer = serializers.SubscriptionListSerializer(
                 subscribe, context={'request': request}
             )
-            return Response(serializer.data, status=status.HTTP_201)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif request.method == 'DELETE':
             chain_follow.delete()
             return Response('Отписка', status=status.HTTP_204_NO_CONTENT)
@@ -187,3 +186,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
             basket.delete()
             return Response('Рецепт удален', status=status.HTTP_204_NO_CONTENT)
         return Response('Ошибка', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(
+        detail=False,
+        methods=['GET', ],
+        permission_classes=(IsAuthenticated,),
+        url_name='download_shopping_cart',
+        url_path='download_shopping_cart',
+    )
+    def download_shopping_cart(self, request):
+        user = request.user
+        basket = serializers.ShoppingBasket.objects.filter(user=user)
+        if not basket:
+            return Response('Корзина путса!')
+        data = basket.values_list(
+            'recipe__ingredients__name',
+            'recipe__ingredients__measurement_unit',
+            'recipe__amounts__amount',
+        )
+        shopping_list = {}
+        for i, (name, mu, amount) in enumerate(data, 1):
+            if name in shopping_list:
+                shopping_list[name][0] += amount
+            else:
+                shopping_list[name] = [amount, mu]
+                
+        print(shopping_list)
+        print(data)
+        return Response('asas')

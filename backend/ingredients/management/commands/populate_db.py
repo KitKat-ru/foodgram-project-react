@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 COMMANDS = {
     'populate_ingredients': 'ingredients.csv',
+    'populate_tags': 'tags.csv',
 }
 
 
