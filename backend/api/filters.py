@@ -1,7 +1,8 @@
-from django_filters import rest_framework as filters
+from django_filters.rest_framework import FilterSet, filters
+
 from ingredients.models import Ingredient, Tag
 from recipes.models import Recipe
-from django_filters.rest_framework import FilterSet, filters
+
 
 class RecipeFilter(FilterSet):
     """Кастомный фильтр для рецептов.
@@ -24,7 +25,7 @@ class RecipeFilter(FilterSet):
     class Meta:
         model = Recipe
         fields = ('author', 'is_favorited', 'tags', 'is_in_shopping_cart', )
-    
+
     def get_is_favorited(self, queryset, name, value):
         if value:
             return Recipe.objects.filter(selected__user=self.request.user)
@@ -32,7 +33,9 @@ class RecipeFilter(FilterSet):
 
     def get_is_in_shopping_cart(self, queryset, name, value):
         if value:
-            return Recipe.objects.filter(shopping_basket__user=self.request.user)
+            return Recipe.objects.filter(
+                shopping_basket__user=self.request.user
+            )
         return Recipe.objects.all()
 
 

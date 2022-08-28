@@ -1,4 +1,5 @@
 from django.db import models
+
 from recipes.models import Recipe
 from users.models import User
 
@@ -18,6 +19,7 @@ class Favorite(models.Model):
                 fields=['user', 'recipe'], name='unique_favorites'
             ),
         ]
+
 
 class ShoppingBasket(models.Model):
     """Модель для реализации добавления рецептов в "Корзину"."""

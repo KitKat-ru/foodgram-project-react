@@ -1,22 +1,29 @@
 import rest_framework.permissions as rest_permissions
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjUserViewSet
-from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe, RecipeIngredient
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from ingredients.models import Ingredient, Tag
+from recipes.models import Recipe
 from users.models import User
 
-from . import permissions, serializers, filters, models, pagination
+from . import filters, models, pagination, permissions, serializers
 
 
 class CustomUserViewSet(DjUserViewSet):
     """Кастомный вьюсет от Dojser.
     Реализованы методы чтения, создания,
     частичного обновления и удаления объектов.
+    Добавлены эндпоинты для подписки/отписки от автора рецепта.
+    Добавлен эндпоинт просмотра подписок.
     """
     serializer_class = serializers.CustomUserSerializer
     queryset = User.objects.all()
@@ -24,16 +31,15 @@ class CustomUserViewSet(DjUserViewSet):
 
     @action(
         detail=True,
-        methods=["POST", "DELETE", ],
+        methods=['POST', 'DELETE'],
         url_path='subscribe',
         url_name='subscribe',
         permission_classes=(IsAuthenticated, )
     )
     def subscribe(self, request, id):
         user = request.user
-        # following = user.follower.all()
         following = get_object_or_404(User, id=id)
-        chain_follow =models.Subscription.objects.filter(
+        chain_follow = models.Subscription.objects.filter(
             user=user.id, following=following.id
         )
         if request.method == 'POST':
@@ -67,14 +73,14 @@ class CustomUserViewSet(DjUserViewSet):
 
     @action(
         detail=False,
-        methods=["GET", ],
+        methods=['GET'],
         url_path='subscriptions',
         url_name='subscriptions',
         permission_classes=(IsAuthenticated, )
     )
     def subscriptions(self, requset):
         user = requset.user
-        qs = models.Subscription.objects.filter(user=user)  
+        qs = models.Subscription.objects.filter(user=user)
         if qs:
             pages = self.paginate_queryset(qs)
             serializer = serializers.SubscriptionListSerializer(
@@ -101,6 +107,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = filters.SearchIngredientFilter
     search_fields = ('^name', )
 
+
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет Теги.
     Реализованы методы чтения списка объектов и отдельного объекта.
@@ -124,7 +131,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = filters.RecipeFilter
     pagination_class = pagination.CustomPagination
-    
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -133,13 +139,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['POST', 'DELETE',],
+        methods=['POST', 'DELETE'],
         permission_classes=(IsAuthenticated,),
         url_name='favorite',
         url_path='favorite',
     )
     def favorite(self, request, pk):
-        user=request.user
+        user = request.user
         data = {'user': user.id, 'recipe': pk}
         if request.method == 'POST':
             serializer = serializers.FavoriteSerializer(
@@ -161,13 +167,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['POST', 'DELETE',],
+        methods=['POST', 'DELETE'],
         permission_classes=(IsAuthenticated,),
         url_name='shopping_cart',
         url_path='shopping_cart',
     )
     def shopping_cart(self, request, pk):
-        user=request.user
+        user = request.user
         data = {'user': user.id, 'recipe': pk}
         if request.method == 'POST':
             serializer = serializers.ShoppingBasketSerializer(
@@ -189,7 +195,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=['GET', ],
+        methods=['GET'],
         permission_classes=(IsAuthenticated,),
         url_name='download_shopping_cart',
         url_path='download_shopping_cart',
@@ -205,12 +211,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'recipe__amounts__amount',
         )
         shopping_list = {}
-        for i, (name, mu, amount) in enumerate(data, 1):
+        for i, (name, mu, amount) in enumerate(data):
             if name in shopping_list:
                 shopping_list[name][0] += amount
             else:
                 shopping_list[name] = [amount, mu]
-                
-        print(shopping_list)
-        print(data)
-        return Response('asas')
+        MyFontObject = TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
+        pdfmetrics.registerFont(MyFontObject)
+        response = HttpResponse(content_type='application/pdf')
+        response[
+            'Content-Disposition'
+        ] = 'attachment; filename="shopping_list.pdf"'
+        pdf = canvas.Canvas(response)
+        pdf.setFont('DejaVuSerif', 14)
+        step = 720
+        indent = 30
+        count = 1
+        for key, value in shopping_list.items():
+            pdf.drawString(
+                indent, step,
+                f'{count}. {key} - {value[0]}, {value[1]}'
+            )
+            step -= 30
+            count += 1
+        pdf.showPage()
+        pdf.save()
+        return response

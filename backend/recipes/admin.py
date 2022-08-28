@@ -17,13 +17,21 @@ class RecipeAdmin(admin.ModelAdmin):
         'pk',
         'name',
         'author',
-        'text',
-        'image',
-        'cooking_time',
         'pub_date',
+        'counts_favorite',
+        'counts_shopping_basket',
     ]
-    inlines = (RecipeIngredientInline, RecipeTagInline, )
+    inlines = [RecipeIngredientInline, RecipeTagInline]
+    search_fields = ('author', 'name')
+    list_filter = ('author', 'name', 'tags')
+    readonly_fields = ['counts_favorite', 'counts_shopping_basket']
     empty_value_display = '-пусто-'
+
+    def counts_favorite(self, obj):
+        return obj.selected.count()
+
+    def counts_shopping_basket(self, obj):
+        return obj.shopping_basket.count()
 
 
 admin.site.register(Recipe, RecipeAdmin)

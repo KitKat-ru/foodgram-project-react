@@ -11,6 +11,8 @@ class IngredientAdmin(admin.ModelAdmin):
         'measurement_unit',
     ]
     empty_value_display = '-пусто-'
+    search_fields = ('name', )
+    list_filter = ('name', )
 
 
 class TagAdmin(admin.ModelAdmin):
@@ -23,6 +25,6 @@ class TagAdmin(admin.ModelAdmin):
     ]
     empty_value_display = '-пусто-'
 
+
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, TagAdmin)
-

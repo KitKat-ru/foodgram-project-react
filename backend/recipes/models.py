@@ -1,5 +1,6 @@
 from django.core.validators import MinValueValidator
 from django.db import models
+
 from ingredients.models import Ingredient, Tag
 from users.models import User
 
@@ -16,7 +17,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         blank=False,
-        verbose_name='описание рецепта'
+        verbose_name='описание рецепта',
     )
     image = models.ImageField(
         verbose_name='фото блюда',
@@ -26,27 +27,27 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        through='RecipeIngredient', 
+        through='RecipeIngredient',
         through_fields=('recipe', 'ingredient'),
         db_column='ingredient',
-        verbose_name='ингредиенты для блюда'
+        verbose_name='ингредиенты для блюда',
     )
     tags = models.ManyToManyField(
         Tag,
         through='RecipeTag',
         db_column='tag',
-        verbose_name='тег рецепта'
+        verbose_name='тег рецепта',
     )
     cooking_time = models.PositiveSmallIntegerField(
         blank=False,
         default=1,
         validators=[MinValueValidator(1), ],
-        verbose_name='время приготовления блюда'
+        verbose_name='время приготовления блюда',
     )
     pub_date = models.DateTimeField(
         auto_now_add=True,
         db_index=True,
-        verbose_name='дата публикации рецепта'
+        verbose_name='дата публикации рецепта',
     )
 
     def __str__(self):
@@ -55,13 +56,21 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = 'рецепт'
         verbose_name_plural = 'рецепты'
-        ordering = ['-pub_date',]
+        ordering = ['-pub_date']
 
 
 class RecipeTag(models.Model):
     """Промежуточная модель для связи Tag-Recipe."""
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='recipe_tags') # релатед найм добавить
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_tags') # релатед найм добавить
+    tag = models.ForeignKey(
+        Tag,
+        on_delete=models.CASCADE,
+        related_name='recipe_tags',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='recipe_tags',
+    )
 
 
 class RecipeIngredient(models.Model):
@@ -70,17 +79,19 @@ class RecipeIngredient(models.Model):
         Ingredient,
         on_delete=models.CASCADE,
         related_name='amounts',
-        verbose_name='Ингредиент'
+        verbose_name='Ингредиент',
     )
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='amounts'
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='amounts',
     )
     amount = models.PositiveSmallIntegerField(
         blank=True,
         null=False,
         default=1,
         validators=[MinValueValidator(1), ],
-        verbose_name='количество'
+        verbose_name='количество',
     )
 
     def __str__(self):

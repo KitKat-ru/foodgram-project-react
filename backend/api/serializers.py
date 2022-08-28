@@ -3,17 +3,20 @@ from logging.handlers import RotatingFileHandler
 
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe, RecipeIngredient
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+
+from ingredients.models import Ingredient, Tag
+from recipes.models import Recipe, RecipeIngredient
 from users.models import User
 
 from .models import Favorite, ShoppingBasket, Subscription
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler('my_logger.log', maxBytes=50000000, backupCount=5)
+handler = RotatingFileHandler(
+    'my_logger.log', maxBytes=50000000, backupCount=5
+)
 logger.addHandler(handler)
 
 
@@ -24,7 +27,7 @@ class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time', )
-        read_only_fields = ('id', 'name', 'image', 'cooking_time', )   
+        read_only_fields = ('id', 'name', 'image', 'cooking_time', )
 
 
 class CustomUserSerializer(UserSerializer):
@@ -65,15 +68,17 @@ class CustomCreateUserSerializer(UserCreateSerializer):
                 'Поля email и username не должны совпадать.'
             )
         return attrs
- 
+
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    """Промежуточный сериализатор связи юзера-рецепта для избранного."""
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
     )
     recipe = serializers.PrimaryKeyRelatedField(
         queryset=Recipe.objects.all(),
     )
+
     class Meta:
         model = Favorite
         fields = ('user', 'recipe')
@@ -93,24 +98,25 @@ class FavoriteSerializer(serializers.ModelSerializer):
         if Favorite.objects.filter(
             user=request.user.id, recipe=recipe
         ).exists():
-            raise serializers.ValidationError({'status': 'Рецепт уже добавлен'})
+            raise serializers.ValidationError(
+                {'status': 'Рецепт уже добавлен'}
+            )
         return attrs
 
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
+        return AbbreviatedRecipeSerializer(
+            instance.recipe, context=context
+        ).data
 
 
-class SubscriptionListSerializer(serializers.ModelSerializer):
-    """Сериализатор для представления списка подписок."""
-    id = serializers.ReadOnlyField(source='following.id')
-    email = serializers.ReadOnlyField(source='following.email')
-    username = serializers.ReadOnlyField(source='following.username')
-    first_name = serializers.ReadOnlyField(source='following.first_name')
-    last_name = serializers.ReadOnlyField(source='following.last_name')
+class SubscriptionListSerializer(CustomUserSerializer):
+    """
+    Сериализатор для представления списка подписок.
+    Отнаследован от  CustomUserSerializer.
+    """
     is_subscribed = serializers.SerializerMethodField(
-        # source='following.is_subscribed',
         method_name='get_is_subscribed',
     )
     recipes = serializers.SerializerMethodField(
@@ -119,18 +125,18 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
     recipes_count = serializers.SerializerMethodField(
         method_name='get_recipes_count',
     )
+
     class Meta:
         model = Subscription
         fields = (
-            'email', 'id', 'username', 'first_name', 'last_name',
-            'is_subscribed', 'recipes', 'recipes_count', 
+            'is_subscribed', 'recipes', 'recipes_count',
         )
 
     def get_is_subscribed(self, obj):
         return Subscription.objects.filter(
             user=obj.user, following=obj.following
         ).exists()
-    
+
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
@@ -144,12 +150,14 @@ class SubscriptionListSerializer(serializers.ModelSerializer):
 
 
 class ShoppingBasketSerializer(serializers.ModelSerializer):
+    """Промежуточный сериализатор связи юзера-рецепта для корзины."""
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
     )
     recipe = serializers.PrimaryKeyRelatedField(
         queryset=Recipe.objects.all(),
     )
+
     class Meta:
         model = ShoppingBasket
         fields = ('user', 'recipe')
@@ -160,10 +168,13 @@ class ShoppingBasketSerializer(serializers.ModelSerializer):
                 message='Рецепт уже в корзине!',
             )
         ]
+
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return AbbreviatedRecipeSerializer(instance.recipe, context=context).data
+        return AbbreviatedRecipeSerializer(
+            instance.recipe, context=context
+        ).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -187,10 +198,10 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         source='ingredient',
         slug_field='id',
         # read_only=True
-        # Выгружаем все ингредиенты через поле ingridient в 
-        # промежуточной таблице RecipeIngredient и берем все объекты 
+        # Выгружаем все ингредиенты через поле ingridient в
+        # промежуточной таблице RecipeIngredient и берем все объекты
         # ингридиентов связанные в промежуточной модели
-        queryset=Ingredient.objects.all()  
+        queryset=Ingredient.objects.all()
     )
     name = serializers.SlugRelatedField(
         # Ссылаемся на модель Ingredient и берем название
@@ -215,29 +226,33 @@ class RecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для чтения и изменения данных об ингридиентах."""
     # Вложенный сериализатор
     author = CustomUserSerializer(read_only=True)
-    # Через MethodField вызываем метод get_ingredients в котором ищем все
-    # ingredient связанные с recipe в промежуточной таблице и передаем в
-    # сериализатор как qset
+    # В get_ingredients создаем qs связанных ингредиентов с рецептом. Данные
+    # беруться из промежуточной таблицы RecipeIngredients, пполученный qs
+    # отдаем в сериализатор для "отображения" которое нужно нам
     ingredients = serializers.SerializerMethodField()
-    # Вложенный сериализатор
+    # Вложенный сериализатор, список
     tags = TagSerializer(many=True, read_only=True)
     # Кастомное поле для предобразования байтовой строки в картинку
-    image=Base64ImageField()
+    image = Base64ImageField()
+    # Кастомное поле в котором провверяется булево наличия в промежуточной
+    # таблицы Favorite
     is_favorited = serializers.SerializerMethodField(
         read_only=True,
         method_name='get_is_favorited',
     )
+    # Кастомное поле в котором провверяется булево наличия в промежуточной
+    # таблицы ShoppingBasket
     is_in_shopping_cart = serializers.SerializerMethodField(
         read_only=True,
         method_name='get_is_in_shopping_cart',
     )
+
     class Meta:
         model = Recipe
         fields = (
-            'id', 'author', 'ingredients', 'tags', 'name', 'image', 
+            'id', 'author', 'ingredients', 'tags', 'name', 'image',
             'text', 'cooking_time', 'is_favorited', 'is_in_shopping_cart'
         )
-        
 
     def get_ingredients(self, obj):
         queryset = RecipeIngredient.objects.filter(recipe=obj)
@@ -259,6 +274,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             ).exists()
         return False
 
+
 class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
     """Сериализатор для добавления в recipe данных об ингридиентах."""
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
@@ -270,7 +286,6 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания и изменения recipe."""
-    # logger.info(f'Я внутри сериализатора')
     author = CustomUserSerializer(read_only=True)
     ingredients = CreateIngredientRecipeSerializer(many=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -298,7 +313,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 recipe=recipe,
                 amount=ingredient['amount'])
         return recipe
-    
+
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
