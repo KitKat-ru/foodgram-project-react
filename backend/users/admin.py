@@ -1,10 +1,9 @@
 from django.contrib import admin
+from django import forms
 from django.contrib.auth.admin import UserAdmin
-
-from api.models import Favorite, ShoppingBasket, Subscription
-
-from .forms import CustomUserChangeForm, CustomUserCreationForm
-from .models import User
+from recipes.models import Favorite, ShoppingBasket
+# from .forms import CustomUserChangeForm, CustomUserCreationForm
+from .models import User, Subscription
 
 
 class FavoriteInline(admin.TabularInline):
@@ -21,9 +20,20 @@ class SubscriptionInline(admin.TabularInline):
 
 
 class CustomUserAdmin(UserAdmin):
-    add_form = CustomUserCreationForm
-    form = CustomUserChangeForm
     model = User
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'username',
+                'password1',
+                'password2',
+                'email',
+                'first_name',
+                'last_name',
+            ),
+        }),
+    )
     list_display = [
         'pk',
         'username',
@@ -42,4 +52,26 @@ class CustomUserAdmin(UserAdmin):
         return obj.following.count()
 
 
+class SubscriptionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Subscription
+        fields = '__all__'
+
+    def clean(self):
+        if self.cleaned_data['user'] == self.cleaned_data['following']:
+            raise forms.ValidationError('Нельзя подписать самого себя!')
+        return self.cleaned_data
+
+
+class SubscriptionAdmin(admin.ModelAdmin):
+    form = SubscriptionAdminForm
+    model = Subscription
+    list_display = [
+        'pk',
+        'user',
+        'following',
+    ]
+
+
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(Subscription, SubscriptionAdmin)

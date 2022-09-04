@@ -1,4 +1,3 @@
-from django.core.validators import MinValueValidator
 from django.db import models
 
 from ingredients.models import Ingredient, Tag
@@ -38,10 +37,9 @@ class Recipe(models.Model):
         db_column='tag',
         verbose_name='тег рецепта',
     )
-    cooking_time = models.PositiveSmallIntegerField(
+    cooking_time = models.SmallIntegerField(
         blank=False,
-        default=1,
-        validators=[MinValueValidator(1), ],
+        default=0,
         verbose_name='время приготовления блюда',
     )
     pub_date = models.DateTimeField(
@@ -72,6 +70,13 @@ class RecipeTag(models.Model):
         related_name='recipe_tags',
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tag', 'recipe'], name='unique_tags'
+            ),
+        ]
+
 
 class RecipeIngredient(models.Model):
     """Промежуточная модель для связи Ingredient-Recipe."""
@@ -86,13 +91,59 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='amounts',
     )
-    amount = models.PositiveSmallIntegerField(
+    amount = models.SmallIntegerField(
         blank=True,
+        default=0,
         null=False,
-        default=1,
-        validators=[MinValueValidator(1), ],
         verbose_name='количество',
     )
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'], name='unique_ingredients'
+            ),
+        ]
+
     def __str__(self):
         return f'{self.recipe}: {self.ingredient} - {self.amount}'
+
+
+class Favorite(models.Model):
+    """Модель для реализации добавления рецептов в "Избранное"."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='selecting'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='selected'
+    )
+
+    class Meta:
+        verbose_name = 'избранное'
+        verbose_name_plural = 'объекты избранного'
+        ordering = ['-user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favorites'
+            ),
+        ]
+
+
+class ShoppingBasket(models.Model):
+    """Модель для реализации добавления рецептов в "Корзину"."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='shopping_basket'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='shopping_basket'
+    )
+
+    class Meta:
+        verbose_name = 'корзина'
+        verbose_name_plural = 'объекты списка покупок'
+        ordering = ['-user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_shopping_basket'
+            ),
+        ]

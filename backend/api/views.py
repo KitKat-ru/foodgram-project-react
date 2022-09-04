@@ -1,21 +1,18 @@
 import rest_framework.permissions as rest_permissions
-from django.http import HttpResponse
+
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjUserViewSet
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
+
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe
-from users.models import User
-
-from . import filters, models, pagination, permissions, serializers
+from recipes.models import Recipe, Favorite, ShoppingBasket
+from users.models import User, Subscription
+from . import filters, pagination, permissions, serializers, services
 
 
 class CustomUserViewSet(DjUserViewSet):
@@ -37,9 +34,10 @@ class CustomUserViewSet(DjUserViewSet):
         permission_classes=(IsAuthenticated, )
     )
     def subscribe(self, request, id):
+        """Эндпоинт для подписки на автора или удаления из списка подписок."""
         user = request.user
         following = get_object_or_404(User, id=id)
-        chain_follow = models.Subscription.objects.filter(
+        chain_follow = Subscription.objects.filter(
             user=user.id, following=following.id
         )
         if request.method == 'POST':
@@ -53,7 +51,7 @@ class CustomUserViewSet(DjUserViewSet):
                     {'errors': 'Вы уже подписаны на этого автора'},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            subscribe = models.Subscription.objects.create(
+            subscribe = Subscription.objects.create(
                 user=user,
                 following=following
             )
@@ -79,8 +77,9 @@ class CustomUserViewSet(DjUserViewSet):
         permission_classes=(IsAuthenticated, )
     )
     def subscriptions(self, requset):
+        """Эндпоинт для фильтрации 'Подписок'."""
         user = requset.user
-        qs = models.Subscription.objects.filter(user=user)
+        qs = Subscription.objects.filter(user=user)
         if qs:
             pages = self.paginate_queryset(qs)
             serializer = serializers.SubscriptionListSerializer(
@@ -145,6 +144,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='favorite',
     )
     def favorite(self, request, pk):
+        """Эндпоинт для фильтрации 'Избранного'."""
         user = request.user
         data = {'user': user.id, 'recipe': pk}
         if request.method == 'POST':
@@ -156,9 +156,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(
                 data=serializer.data, status=status.HTTP_201_CREATED
             )
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             recipe = get_object_or_404(Recipe, pk=pk)
-            favorite = models.Favorite.objects.filter(
+            favorite = Favorite.objects.filter(
                 user=user.id, recipe=recipe
             )
             favorite.delete()
@@ -173,6 +173,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='shopping_cart',
     )
     def shopping_cart(self, request, pk):
+        """Эндпоинт для формирования списка покупок в корзине."""
         user = request.user
         data = {'user': user.id, 'recipe': pk}
         if request.method == 'POST':
@@ -184,9 +185,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(
                 data=serializer.data, status=status.HTTP_201_CREATED
             )
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             recipe = get_object_or_404(Recipe, pk=pk)
-            basket = models.ShoppingBasket.objects.filter(
+            basket = ShoppingBasket.objects.filter(
                 user=user.id, recipe=recipe
             )
             basket.delete()
@@ -201,6 +202,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
     )
     def download_shopping_cart(self, request):
+        """Эндпоинт для скачивания списка покупок из корзины."""
         user = request.user
         basket = serializers.ShoppingBasket.objects.filter(user=user)
         if not basket:
@@ -210,30 +212,4 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'recipe__ingredients__measurement_unit',
             'recipe__amounts__amount',
         )
-        shopping_list = {}
-        for i, (name, mu, amount) in enumerate(data):
-            if name in shopping_list:
-                shopping_list[name][0] += amount
-            else:
-                shopping_list[name] = [amount, mu]
-        MyFontObject = TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
-        pdfmetrics.registerFont(MyFontObject)
-        response = HttpResponse(content_type='application/pdf')
-        response[
-            'Content-Disposition'
-        ] = 'attachment; filename="shopping_list.pdf"'
-        pdf = canvas.Canvas(response)
-        pdf.setFont('DejaVuSerif', 14)
-        step = 720
-        indent = 30
-        count = 1
-        for key, value in shopping_list.items():
-            pdf.drawString(
-                indent, step,
-                f'{count}. {key} - {value[0]}, {value[1]}'
-            )
-            step -= 30
-            count += 1
-        pdf.showPage()
-        pdf.save()
-        return response
+        return services.creating_a_shopping_list(data)

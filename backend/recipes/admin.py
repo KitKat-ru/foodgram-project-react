@@ -1,14 +1,45 @@
 from django.contrib import admin
+from django import forms
+from .models import (Recipe, RecipeIngredient, RecipeTag,
+                     Favorite, ShoppingBasket)
 
-from .models import Recipe, RecipeIngredient, RecipeTag
+
+class IngredientsInlineFormset(forms.models.BaseInlineFormSet):
+    def clean(self):
+        count = 0
+        for form in self.forms:
+            try:
+                if form.cleaned_data:
+                    count += 1
+            except AttributeError:
+                pass
+        if count < 1:
+            raise forms.ValidationError('Добавьте ингредиенты')
+
+
+class TagsInlineFormset(forms.models.BaseInlineFormSet):
+    def clean(self):
+        count = 0
+        for form in self.forms:
+            try:
+                if form.cleaned_data:
+                    count += 1
+            except AttributeError:
+                pass
+        if count < 1:
+            raise forms.ValidationError('Добавьте теги')
 
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
+    formset = IngredientsInlineFormset
+    extra = 2
 
 
 class RecipeTagInline(admin.TabularInline):
     model = RecipeTag
+    formset = TagsInlineFormset
+    extra = 3
 
 
 class RecipeAdmin(admin.ModelAdmin):
@@ -22,7 +53,7 @@ class RecipeAdmin(admin.ModelAdmin):
         'counts_shopping_basket',
     ]
     inlines = [RecipeIngredientInline, RecipeTagInline]
-    search_fields = ('author', 'name')
+    search_fields = ('name', 'author__username', 'tags__name', )
     list_filter = ('author', 'name', 'tags')
     readonly_fields = ['counts_favorite', 'counts_shopping_basket']
     empty_value_display = '-пусто-'
@@ -34,4 +65,24 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.shopping_basket.count()
 
 
+class FavoriteAdmin(admin.ModelAdmin):
+    model = Favorite
+    list_display = [
+        'pk',
+        'user',
+        'recipe',
+    ]
+
+
+class ShoppingBasketAdmin(admin.ModelAdmin):
+    model = ShoppingBasket
+    list_display = [
+        'pk',
+        'user',
+        'recipe',
+    ]
+
+
 admin.site.register(Recipe, RecipeAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(ShoppingBasket, ShoppingBasketAdmin)
