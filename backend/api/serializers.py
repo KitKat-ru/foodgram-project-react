@@ -3,13 +3,11 @@ from logging.handlers import RotatingFileHandler
 
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
+from ingredients.models import Ingredient, Tag
+from recipes.models import Favorite, Recipe, RecipeIngredient, ShoppingBasket
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-
-from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe, RecipeIngredient, Favorite, ShoppingBasket
-from users.models import User, Subscription
-
+from users.models import Subscription, User
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -312,23 +310,22 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         min_ingredients = 2
         if len(ingredients) < min_ingredients:
             raise serializers.ValidationError(
-                {'status': 'Ингредиентов должно быть больше двух!'}
+                {'status': 'Ингредиентов должно быть два или больше!'}
             )
         data = []
         for ingredient in ingredients:
             logger.info(ingredient['amount'])
             data.append(ingredient['id'])
             if ingredient['amount'] <= 0:
-                ingredient_error = ingredient['id']
+                ingredient_incorrect = ingredient['id']
                 logger.info(ingredient['amount'])
                 raise serializers.ValidationError(
-                    {'status': f'ЕИ - ингредиента "{ingredient_error}" не'
+                    {'status': f'ЕИ - ингредиента "{ingredient_incorrect}" не'
                                f' должна быть равна нулю или !'
                                f'отрицательным числом'}
                 )
         logger.info(data)
         check_unique = set(data)
-        # logger.info(check_unique)
         if len(check_unique) != len(data):
             raise serializers.ValidationError(
                 {'status': 'Ингридиенты должны быть уникальны!'}

@@ -1,7 +1,8 @@
-from django.contrib import admin
 from django import forms
-from .models import (Recipe, RecipeIngredient, RecipeTag,
-                     Favorite, ShoppingBasket)
+from django.contrib import admin
+
+from .models import (Favorite, Recipe, RecipeIngredient, RecipeTag,
+                     ShoppingBasket)
 
 
 class IngredientsInlineFormset(forms.models.BaseInlineFormSet):

@@ -1,17 +1,14 @@
 import rest_framework.permissions as rest_permissions
-
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as DjUserViewSet
-
+from ingredients.models import Ingredient, Tag
+from recipes.models import Favorite, Recipe, ShoppingBasket
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from ingredients.models import Ingredient, Tag
-from recipes.models import Recipe, Favorite, ShoppingBasket
-from users.models import User, Subscription
+from users.models import Subscription, User
 from . import filters, pagination, permissions, serializers, services
 
 
