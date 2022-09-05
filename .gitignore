@@ -131,6 +131,10 @@ dmypy.json
 # .idea
 .idea
 .vscode/
+
+# .isort
+.isort.cfg
+
 # http://localhost/api/ingredients/
 # Собрать докеркомпоз
 # sudo docker-compose up -d --build

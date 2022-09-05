@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('recipes', '0015_rename_description_recipe_text'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('api', '0001_initial'),
+        ('recipes', '0001_initial'),
     ]
 
     operations = [

@@ -3,10 +3,11 @@ from logging.handlers import RotatingFileHandler
 
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from ingredients.models import Ingredient, Tag
-from recipes.models import Favorite, Recipe, RecipeIngredient, ShoppingBasket
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+
+from ingredients.models import Ingredient, Tag
+from recipes.models import Favorite, Recipe, RecipeIngredient, ShoppingBasket
 from users.models import Subscription, User
 
 logger = logging.getLogger(__name__)
@@ -304,13 +305,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         logger.info(attrs)
         if not attrs['ingredients'] or not attrs['tags']:
             raise serializers.ValidationError(
-                {'status': 'Добавьте ингредиенты и укажите тег для рецепта!'}
+                'Добавьте ингредиенты и укажите тег для рецепта!'
             )
         ingredients = attrs['ingredients']
         min_ingredients = 2
         if len(ingredients) < min_ingredients:
             raise serializers.ValidationError(
-                {'status': 'Ингредиентов должно быть два или больше!'}
+                'Ингредиентов должно быть два или больше!'
             )
         data = []
         for ingredient in ingredients:
@@ -320,19 +321,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 ingredient_incorrect = ingredient['id']
                 logger.info(ingredient['amount'])
                 raise serializers.ValidationError(
-                    {'status': f'ЕИ - ингредиента "{ingredient_incorrect}" не'
-                               f' должна быть равна нулю или !'
-                               f'отрицательным числом'}
+                    f'ЕИ - ингредиента "{ingredient_incorrect}" не'
+                    'должна быть равна нулю или отрицательным числом!'
                 )
         logger.info(data)
         check_unique = set(data)
         if len(check_unique) != len(data):
             raise serializers.ValidationError(
-                {'status': 'Ингридиенты должны быть уникальны!'}
+                'Ингридиенты должны быть уникальны!'
             )
         if attrs['cooking_time'] <= 0:
             raise serializers.ValidationError(
-                {'status': 'Время приготовления должно быть больше нуля!'}
+                'Время приготовления должно быть больше нуля!'
             )
         return attrs
 

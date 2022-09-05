@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+
 from recipes.models import Favorite, ShoppingBasket
+
 # from .forms import CustomUserChangeForm, CustomUserCreationForm
 from .models import Subscription, User
 

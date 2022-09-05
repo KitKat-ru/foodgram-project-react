@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0004_alter_subscription_options'),
+        ('recipes', '0004_alter_subscription_options'),
     ]
 
     operations = [
