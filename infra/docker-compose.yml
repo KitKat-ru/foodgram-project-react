@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 services:
   db:
     image: postgres:13.0-alpine
@@ -8,10 +8,15 @@ services:
       - ./.env
 
   backend:
-    build:
-      context: ../backend
+    image: taeray/backend:v1.1
+    # build:
+    #   context: ../backend
     restart: always
-    command: "gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate &&
+             python manage.py populate_db &&
+             gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - backend_static:/app/backend_static/
       - media:/app/media/
@@ -21,9 +26,10 @@ services:
       - ./.env
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: taeray/frontend:v1.0
+    # build:
+    #   context: ../frontend
+    #   dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
 

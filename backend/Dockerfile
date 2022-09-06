@@ -1,8 +1,13 @@
-FROM python:3.10-slim 
+FROM python:3.9-slim 
 
-RUN apt update && apt -y install libpq-dev build-essential
+
+RUN apt-get clean && apt-get update
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev build-essential gcc
 WORKDIR /app
 COPY requirements.txt /app
 RUN pip install --upgrade pip && pip3 install -r requirements.txt --no-cache-dir
 COPY ./ /app
 CMD ["gunicorn", "foodgram.wsgi:application", "--bind", "0:8000" ]
+# RUN chmod +x entrypoint.sh
+# ENTRYPOINT ["./entrypoint.sh"]
+# CMD ["RUN"]

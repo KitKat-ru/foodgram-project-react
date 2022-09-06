@@ -142,7 +142,6 @@ dmypy.json
 # Пересоздать
 # sudo docker-compose up -d --force-recreate nginx
 
-
 # Миграции в контейнере
 # sudo docker-compose exec backend python manage.py makemigrations
 # sudo docker-compose exec backend python manage.py migrate
@@ -170,3 +169,10 @@ dmypy.json
 
 # Анигиляция
 # sudo docker system prune -a --volumes
+
+
+# sudo docker image ls
+
+
+# sudo docker build -t taeray/backend:v1.1 .
+# sudo docker push taeray/backend:v1.1
