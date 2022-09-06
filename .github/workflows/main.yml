@@ -26,7 +26,6 @@ jobs:
         python -m pip install --upgrade pip  
         # установка flake8 и его плагинов 
         pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort 
-        rm .isort.cfg
         touch .isort.cfg
         echo [settings] >> .isort.cfg
         echo known_first_party=api,ingredients,recipes,users >> .isort.cfg
