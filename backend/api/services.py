@@ -12,8 +12,8 @@ def creating_a_shopping_list(data):
             shopping_list[name][0] += amount
         else:
             shopping_list[name] = [amount, mu]
-    MyFontObject = TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
-    pdfmetrics.registerFont(MyFontObject)
+    my_font_objects = TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
+    pdfmetrics.registerFont(my_font_objects)
     response = HttpResponse(content_type='application/pdf')
     response[
         'Content-Disposition'

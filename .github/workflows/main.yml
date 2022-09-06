@@ -23,14 +23,18 @@ jobs:
     - name: Install dependencies 
       run: |  
         # обновление pip 
-        python -m pip install --upgrade pip  
+        python -m pip install --upgrade pip
+
         # установка flake8 и его плагинов 
-        pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort 
+        pip install flake8 pep8-naming flake8-broken-line flake8-return flake8-isort
+
+        # Дополнительные настройки isort
         touch .isort.cfg
         echo [settings] >> .isort.cfg
         echo known_first_party=api,ingredients,recipes,users >> .isort.cfg
+
+        # установка зависимостей
         cd backend/
-        # установка зависимостей 
         pip install -r requirements.txt  
 
     - name: Test with flake8 and django tests 
