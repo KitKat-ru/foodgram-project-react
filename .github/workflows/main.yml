@@ -83,8 +83,7 @@ jobs:
         passphrase: ${{ secrets.PASSPHRASE }} 
         script: | 
             sudo docker-compose stop 
-            sudo docker-compose rm backend 
-
+            sudo docker-compose rm backend
             rm .env
             touch .env 
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env 
