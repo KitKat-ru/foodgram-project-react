@@ -63,7 +63,7 @@ jobs:
           username: ${{ secrets.LOGIN_DOCKER }} 
           password: ${{ secrets.PASSWORD_DOCKER }} 
       - name: Push to Docker Hub 
-        # Пуш образа в Docker Hub             #  
+        # Пуш образа в Docker Hub             #  # sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:v1.1
         uses: docker/build-push-action@v2
         with: 
           context: ./backend
@@ -84,7 +84,7 @@ jobs:
         script: | 
             sudo docker-compose stop 
             sudo docker-compose rm backend 
-# sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:v1.1
+
             rm .env
             touch .env 
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env 
