@@ -10,7 +10,7 @@ services:
   backend:
     image: taeray/backend:v1.1 
     # build:
-    #   context: ../backend # sh -c "gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
+    #   context: ../backend
     restart: always
     command: >
 
