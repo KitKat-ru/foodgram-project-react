@@ -60,13 +60,14 @@ class CustomUserViewSet(DjUserViewSet):
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif request.method == 'DELETE':
-            if not chain_follow.exists():
-                return Response(
-                    'Вы уже отписались',
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            chain_follow.delete()
-            return Response('Отписка', status=status.HTTP_204_NO_CONTENT)
+            if chain_follow.exists():
+                chain_follow.delete()
+                return Response('Отписка', status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                'Вы уже отписались',
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response('Ошибка', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(
         detail=False,
