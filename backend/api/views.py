@@ -42,12 +42,12 @@ class CustomUserViewSet(DjUserViewSet):
         if request.method == 'POST':
             if user == following:
                 return Response(
-                    {'errors': 'Нельзя подписаться на самого себя'},
+                    'Нельзя подписаться на самого себя',
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             if chain_follow.exists():
                 return Response(
-                    {'errors': 'Вы уже подписаны на этого автора'},
+                    'Вы уже подписаны на этого автора',
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             subscribe = Subscription.objects.create(
@@ -55,18 +55,18 @@ class CustomUserViewSet(DjUserViewSet):
                 following=following
             )
             subscribe.save()
-            serializer = serializers.SubscriptionListSerializer(
+            serializer = serializers.SubscriptionSerializer(
                 subscribe, context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif request.method == 'DELETE':
+            if not chain_follow.exists():
+                return Response(
+                    'Вы уже отписались',
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             chain_follow.delete()
             return Response('Отписка', status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(
-                {'errors': 'Вы уже отписались'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
     @action(
         detail=False,
@@ -75,20 +75,20 @@ class CustomUserViewSet(DjUserViewSet):
         url_name='subscriptions',
         permission_classes=(IsAuthenticated, )
     )
-    def subscriptions(self, requset):
+    def subscriptions(self, request):
         """Эндпоинт для фильтрации 'Подписок'."""
-        user = requset.user
+        user = request.user
         qs = Subscription.objects.filter(user=user)
         if qs:
             pages = self.paginate_queryset(qs)
             serializer = serializers.SubscriptionListSerializer(
                 pages,
                 many=True,
-                context={'request': requset},
+                context={'request': request},
             )
             return self.get_paginated_response(serializer.data)
         return Response(
-            {'error': 'У Вас еще нет подписок'},
+            'У Вас еще нет подписок.',
             status=status.HTTP_400_BAD_REQUEST,
         )
 

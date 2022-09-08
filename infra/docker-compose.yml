@@ -8,16 +8,16 @@ services:
       - ./.env
 
   backend:
-    image: taeray/backend:v1.1 
+    image: taeray/backend:v1.1
     # build:
     #   context: ../backend
     restart: always
     command: >
-
       sh -c "python manage.py collectstatic --noinput &&
               python manage.py migrate &&
               python manage.py populate_db &&
               gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
+
     volumes:
       - backend_static:/app/backend_static/
       - media:/app/media/
@@ -49,3 +49,8 @@ volumes:
   db:
   backend_static:
   media:
+# #       
+#       sh -c "python manage.py collectstatic --noinput &&
+#               python manage.py migrate &&
+#               python manage.py populate_db &&
+#               gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"

@@ -18,9 +18,6 @@ class User(AbstractUser):
         max_length=150,
         blank=False,
     )
-    is_subscribed = models.BooleanField(
-        default=False
-    )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
@@ -60,3 +57,6 @@ class Subscription(models.Model):
                 fields=['user', 'following'], name='unique_follower'
             ),
         ]
+
+    def __str__(self):
+        return f'Связь {self.user} - {self.following}'

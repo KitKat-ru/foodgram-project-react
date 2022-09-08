@@ -28,13 +28,22 @@ class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'username', 'first_name',
+            'email', 'id', 'username', 'first_name',
             'last_name', 'is_subscribed',
         )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Subscription.objects.filter(
+                user=user, following=obj
+            ).exists()
+        return False
 
 
 class CustomCreateUserSerializer(UserCreateSerializer):
@@ -108,11 +117,35 @@ class FavoriteSerializer(serializers.ModelSerializer):
         ).data
 
 
+class SubscriptionSerializer(serializers.ModelSerializer):
+    """Промежуточный сериализатор связи юзера-рецепта для избранного."""
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    following = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+
+    class Meta:
+        model = Subscription
+        fields = ('user', 'following')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Subscription.objects.all(),
+                fields=['user', 'following'],
+                message='Вы уже подписаны на этого автора!',
+            )
+        ]
+
+
 class SubscriptionListSerializer(CustomUserSerializer):
     """
     Сериализатор для представления списка подписок.
     Отнаследован от  CustomUserSerializer.
     """
+    id = serializers.ReadOnlyField(source='following.id')
+    first_name = serializers.ReadOnlyField(source='following.first_name')
+    last_name = serializers.ReadOnlyField(source='following.last_name')
     is_subscribed = serializers.SerializerMethodField(
         method_name='get_is_subscribed',
     )
@@ -126,13 +159,17 @@ class SubscriptionListSerializer(CustomUserSerializer):
     class Meta:
         model = Subscription
         fields = (
-            'is_subscribed', 'recipes', 'recipes_count',
+            'id', 'first_name', 'last_name', 'is_subscribed',
+            'recipes', 'recipes_count',
         )
 
     def get_is_subscribed(self, obj):
-        return Subscription.objects.filter(
-            user=obj.user, following=obj.following
-        ).exists()
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return Subscription.objects.filter(
+                user=user, following=obj.following
+            ).exists()
+        return False
 
     def get_recipes(self, obj):
         request = self.context.get('request')
