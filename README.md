@@ -89,4 +89,4 @@
 
 
 ## Плашка о прохождении `workflow`:
-![example workflow](https://github.com/KitKat-ru/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
+![example workflow](https://github.com/KitKat-ru/foodgram-project-react/actions/workflows/main.yml/badge.svg)
