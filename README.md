@@ -35,11 +35,6 @@
     DB_HOST=db (название сервиса (контейнера)
     DB_PORT=5432 (порт для подключения к БД)
 
-### Перейдите в репозиторий к директории с файлами `docker-compose.yaml` и `nginx/default.conf` с помощью командной строки: ###
-### В файле `nginx/default.conf` укажите IP ВМ на которой будет запускаться проект ###
-
-    nano foodgram-project-react/infra/nginx/default.conf
-
 ### Скопируйте файлы `docker-compose.yaml` и `nginx/default.conf` из вашего проекта на сервер в `home/<ваш_username>/docker-compose.yaml` и `home/<ваш_username>/nginx/default.conf` соответственно ###
 
   
@@ -57,10 +52,9 @@
 
 ### После развертывания проекта заходите в ВМ и создайте миграции и заполнените базу данных: ###
 
-    sudo docker-compose exec web python manage.py makemigrates
-    sudo docker-compose exec web python manage.py migrate
-    sudo docker-compose exec web python manage.py createsuperuser
-    sudo docker-compose exec web python manage.py collectstatic --no-input
+    sudo docker-compose exec backend python manage.py migrate
+    sudo docker-compose exec backend python manage.py createsuperuser
+    sudo docker-compose exec backend python manage.py collectstatic --no-input
 
 ## Алгоритм регистрации и авторизации пользователей ##
   
@@ -69,16 +63,18 @@
 5. При желании пользователь отправляет PATCH-запрос на эндпоинт `/api/users/me/` и заполняет поля в своём профайле.
 
 ### Для тестирования REST API можно обратиться по `URL`:
-    http://test_ip/api/
-    http://test_ip/redoc/
+    http://51.250.108.107/api/
+    http://51.250.108.107/redoc/
     
 ### Для тестирования Web-сервиса можно обратиться по `URL`:    
     
-    http://test_ip/
+    http://51.250.108.107/recipes/
 
 ### панель администратора единая, доступна по `URL`:
 
-    http://test_ip/admin/
+    http://51.250.108.107/admin/
+    login - test@test.ru
+    pass - Asdfgh12345
 
 ### Автор:
 
@@ -89,7 +85,7 @@
 
 ## Образ выложен на DockerHub, что бы его скачать введите:
 
-    sudo docker pull taeray/foodgram_web:v.1.0
+    sudo docker pull taeray/backend:v1.1
 
 
 ## Плашка о прохождении `workflow`:
