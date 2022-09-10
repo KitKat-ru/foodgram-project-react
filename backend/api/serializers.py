@@ -28,6 +28,7 @@ class AbbreviatedRecipeSerializer(serializers.ModelSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
+    """Сериализатор для взаимодействия с фронтом при "подписке-отписке"."""
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -118,7 +119,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    """Промежуточный сериализатор связи юзера-рецепта для избранного."""
+    """Промежуточный сериализатор связи юзера-автора для подписок."""
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
     )
