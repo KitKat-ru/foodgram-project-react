@@ -159,11 +159,18 @@ dmypy.json
 # sudo docker container ls -a
 # sudo docker exec -it <ID > bash
 
+# sudo docker exec -it 90e044837a7d psql -U postgres -W postgres
+# sudo -u postgres psql
+
 
 # Логи
 # sudo docker logs --follow infra_backend_1
 # sudo docker logs --follow infra_nginx_1
 # sudo docker logs --follow infra_db_1
+
+# sudo docker logs --follow infra-backend-1
+# sudo docker logs --follow infra-nginx-1
+# sudo docker logs --follow infra-db-1
 
 # http://localhost/api/docs/
 
@@ -176,3 +183,7 @@ dmypy.json
 
 # sudo docker build -t taeray/backend:v1.1 .
 # sudo docker push taeray/backend:v1.1
+
+# На ВМ админка
+# лог - test@test.ru
+# пас -Asdfgh12345

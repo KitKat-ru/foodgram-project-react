@@ -35,15 +35,26 @@ services:
     image: nginx:1.21.3
     ports:
       - "80:80"
+      - "443:443"
+    restart: always
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+      - ./data/certbot/conf:/etc/letsencrypt #
+      - ./data/certbot/www:/var/www/certbot #
       - backend_static:/app/backend_static/:ro
       - media:/app/media/:ro
-
     depends_on:
       - backend
+  certbot:
+    image: certbot/certbot
+    volumes:
+       - ./data/certbot/conf:/etc/letsencrypt
+       - ./data/certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
+
 
 volumes:
   db:
