@@ -55,7 +55,7 @@ services:
         - acme:/var/www/
       depends_on:
         - nginx
-      entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+#      entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
       command: certonly -v --webroot -w /var/www/ -d ${DOMAIN} --email ${SSL_CERT_EMAIL} --agree-tos --no-eff-email
 
 volumes:
