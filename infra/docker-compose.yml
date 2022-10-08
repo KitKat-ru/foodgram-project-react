@@ -56,7 +56,7 @@ services:
       depends_on:
         - nginx
       entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-      command: certonly -v --webroot -w /var/www/ -d food-ts.ddns.net --email althome2@mail.ru --agree-tos --no-eff-email # ${DOMAIN} ${SSL_CERT_EMAIL}
+      command: certonly -v --webroot -w /var/www/ -d ${DOMAIN} --email ${SSL_CERT_EMAIL} --agree-tos --no-eff-email
 
 volumes:
   db:
