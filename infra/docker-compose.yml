@@ -9,8 +9,6 @@ services:
 
   backend:
     image: taeray/backend:v1.1
-    # build:
-    #   context: ../backend
     restart: always
     command: >
       sh -c "python manage.py collectstatic --noinput &&
@@ -35,17 +33,40 @@ services:
     image: nginx:1.21.3
     ports:
       - "80:80"
+      - "443:443"
+    restart: always
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/lib/letsencrypt
+      - acme:/acme
       - backend_static:/app/backend_static/:ro
       - media:/app/media/:ro
-
     depends_on:
       - backend
+  certbot:
+      image: certbot/certbot
+      container_name: certbot
+      volumes:
+        - certbot-conf:/etc/letsencrypt
+        - certbot-www:/var/lib/letsencrypt
+        - acme:/var/www/
+      depends_on:
+        - nginx
+#      entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+      command: certonly -v --webroot -w /var/www/ -d ${DOMAIN} --email ${SSL_CERT_EMAIL} --agree-tos --no-eff-email
 
 volumes:
   db:
   backend_static:
   media:
+  acme:
+  certbot-conf:
+  certbot-www:
+# #       
+#       sh -c "python manage.py collectstatic --noinput &&
+#               python manage.py migrate &&
+#               python manage.py populate_db &&
+#               gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
