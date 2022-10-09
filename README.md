@@ -34,6 +34,8 @@
     POSTGRES_PASSWORD=... (пароль для подключения к БД (установите свой)
     DB_HOST=db (название сервиса (контейнера)
     DB_PORT=5432 (порт для подключения к БД)
+    DOMAIN=... (указать домен на котором будет находится сайт)
+    SSL_CERT_EMAIL=... (почта для регистрации сертификата SSL)
 
 ### Скопируйте файлы `docker-compose.yaml` и `nginx/default.conf` из вашего проекта на сервер в `home/<ваш_username>/docker-compose.yaml` и `home/<ваш_username>/nginx/default.conf` соответственно ###
 
