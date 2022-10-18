@@ -49,7 +49,7 @@
 ### Скопируйте файлы `docker-compose.yaml` и `nginx/default.conf` из вашего проекта на сервер в `home/<ваш_username>/docker-compose.yaml` и `home/<ваш_username>/nginx/default.conf` соответственно ###
 
   
-### Подготовьте ВМ. Остановите службу nginx. Установите - [Docker и Docker-compose](https://docs.docker.com/engine/install/ubuntu/): ###
+### Подготовьте виртуальную машину. Остановите службу nginx. Установите - [Docker и Docker-compose](https://docs.docker.com/engine/install/ubuntu/): ###
 
     sudo apt update
     sudo apt upgrade
